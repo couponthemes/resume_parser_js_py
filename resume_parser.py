@@ -201,7 +201,22 @@ def main(zip_file_path, job_desc):
         file_path = os.path.join(UNZIP_TO_FLD, filename)
         if os.path.isfile(file_path):
             print("Processing file:", file_path)
-            out = json.loads(resume_parser(file_path))
+            text = extract_text_from_pdf(file_path)  # Corrected function call here
+            print("Extracted text:", text)  # Print the extracted text
+
+            # Check if the extracted text is empty or contains invalid characters
+            if not text.strip():
+                print("Empty or invalid text. Skipping file.")
+                continue
+
+            # Add try-except block to handle JSON parsing
+            try:
+                out = json.loads(text)  # Parse the extracted text as JSON
+            except json.JSONDecodeError as e:
+                print("Error parsing JSON:", e)
+                continue  # Skip this file and proceed to the next
+
+            out = json.loads(text)  # Parse the extracted text as JSON
             skills_target = [(sublist[1], sublist[2]) for sublist in out["data"]["skills"]]
             match_score = similarity_score(skills_source, skills_target)
             ele = {
@@ -226,8 +241,21 @@ def main(zip_file_path, job_desc):
 
     return json.dumps(jout)
 
-# If you want to test the parser independently, you can add a simple test here
-# For example:
-# test_file_path = "/path/to/your/test_resume.pdf"
-# result = resume_parser(test_file_path)
-# print(result)
+# Check if the script is being run directly (not imported)
+if __name__ == "__main__":
+    import sys
+
+    # Check if the correct number of arguments is provided
+    if len(sys.argv) != 3:
+        print("Usage: python resume_parser.py <zip_file_path> <job_description>")
+        sys.exit(1)
+
+    # Get the command-line arguments
+    zip_file_path = sys.argv[1]
+    job_desc = sys.argv[2]
+
+    # Call the main function with the provided arguments
+    result = main(zip_file_path, job_desc)
+
+    # Print the result (you can redirect it to a file if needed)
+    print(result)
