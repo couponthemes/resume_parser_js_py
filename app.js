@@ -25,11 +25,12 @@ app.post('/upload', upload.single('file'), (req, res) => {
     args: [zipFilePath, jobDescription],
   };
 
-  
+
   // Use PythonShell.run with Promise
   PythonShell.run('resume_parser.py', options)
     .then(results => {
       // Parse the output from the Python script and send it back as JSON
+      console.log("Data is: "+results);
       const parsedResults = JSON.parse(results);
       res.json(parsedResults);
     })

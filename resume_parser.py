@@ -67,7 +67,15 @@ def extract_text_from_pdf(pdf_path):
             extracted_text += fake_file_handle.getvalue()
             converter.close()
             fake_file_handle.close()
+
+    # Check if the extracted text is empty or contains invalid characters
+    if not extracted_text.strip():
+        # Instead of raising an error, skip processing this file
+        print("Empty or invalid text extracted from the PDF. Skipping file.")
+        return None
+
     return extracted_text
+
 
 import docx2txt
 def extract_text_from_doc(doc_path):
@@ -152,6 +160,38 @@ def extractLinks(doc):
             links.append(link)
     return links
 
+
+def resume_parser(file_path):
+    out = []
+    ext = os.path.splitext(file_path)[1].lower()
+    if ext in ALLOWED_FILE_TYPES:
+      filename = os.path.basename(file_path)
+      if ext == ".pdf":
+        text = extract_text_from_pdf(file_path)
+      elif ext == ".doc" or ext == ".docx":
+        text = extract_text_from_doc(file_path)
+      doc = preprocess(text)
+      persons, organizations = extractNER(doc)
+      emails = extract_email_addresses(doc)
+      phones = extract_phones(doc)
+      educations = extractEducation(doc)
+      links = set(extractLinks(doc))
+      skills = set(extractSkills(text))
+      out = {
+          "filename": filename,
+          "data": {
+              "persons": persons,
+              "organizations": organizations,
+              "emails": list(emails),
+              "phones": list(phones),
+              "educations": list(educations),
+              "links": list(links),
+              "skills": list(skills)
+          }
+      }
+    
+    return json.dumps(out)
+
 def compute_cosine_similarity(text1, text2):
     text1 = list(text1)
     text2 = list(text2)
@@ -188,6 +228,7 @@ def similarity_score(source, target):
     combined_score = (cosine_similarity_score * weight_cosine) + (jaccard_similarity_score * weight_jaccard)
     return combined_score
 
+
 def main(zip_file_path, job_desc):
     with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
         zip_ref.extractall(UNZIP_TO_FLD)
@@ -197,26 +238,17 @@ def main(zip_file_path, job_desc):
 
     data = []
     counter = 1
+    # Loop through the files in the folder
     for filename in os.listdir(UNZIP_TO_FLD):
+        # Construct the absolute file path
         file_path = os.path.join(UNZIP_TO_FLD, filename)
+    
+        # Check if the current item is a file
         if os.path.isfile(file_path):
+            # Perform operations on the file
             print("Processing file:", file_path)
-            text = extract_text_from_pdf(file_path)  # Corrected function call here
-            print("Extracted text:", text)  # Print the extracted text
-
-            # Check if the extracted text is empty or contains invalid characters
-            if not text.strip():
-                print("Empty or invalid text. Skipping file.")
-                continue
-
-            # Add try-except block to handle JSON parsing
-            try:
-                out = json.loads(text)  # Parse the extracted text as JSON
-            except json.JSONDecodeError as e:
-                print("Error parsing JSON:", e)
-                continue  # Skip this file and proceed to the next
-
-            out = json.loads(text)  # Parse the extracted text as JSON
+            # Extract data from resume
+            out = json.loads(resume_parser(file_path))
             skills_target = [(sublist[1], sublist[2]) for sublist in out["data"]["skills"]]
             match_score = similarity_score(skills_source, skills_target)
             ele = {
@@ -232,18 +264,20 @@ def main(zip_file_path, job_desc):
             }
             data.append(ele)
             counter += 1
-
+    
+    # Instead of printing the JSON result, directly return it as a response
     jout = {
         "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "zip_file": zip_file_path,
         "data": data
     }
-
-    return json.dumps(jout)
+    
+    return jout
 
 # Check if the script is being run directly (not imported)
 if __name__ == "__main__":
     import sys
+    import json  # Import the json module
 
     # Check if the correct number of arguments is provided
     if len(sys.argv) != 3:
@@ -258,4 +292,4 @@ if __name__ == "__main__":
     result = main(zip_file_path, job_desc)
 
     # Print the result (you can redirect it to a file if needed)
-    print(result)
+    print(json.dumps(result))
