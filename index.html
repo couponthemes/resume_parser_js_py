@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Resume Parser</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f1f1f1;
+        }
+        
+        .header {
+            background-color: #333;
+            color: #fff;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .container {
+            max-width: 1000px; /* Increased width */
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        
+        input[type="file"],
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        
+        input[type="submit"] {
+            background-color: #333;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        input[type="submit"]:hover {
+            background-color: #555;
+        }
+        
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            font-size: 14px;
+        }
+        
+        /* Additional styles for the table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+        }
+        
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Resume Parser</h1>
+    </div>
+    <div class="container">
+        <form action="/upload" method="post" enctype="multipart/form-data">
+            <div>
+                <label for="file">Upload Candidate Resume:</label>
+                <input type="file" id="file" name="file" required>
+            </div>
+            <br>
+            <div>
+                <label for="description">Job Description:</label>
+                <textarea id="description" name="description" rows="4" cols="50" required></textarea>
+            </div>
+            <br>
+            <div style="text-align: center;">
+                <input type="submit" value="Upload" onclick="uploadForm()">
+            </div>
+        </form>
+        <div class="result" id="resultSection">
+            <h3>Matching Results:</h3>
+            <table id="resultTable">
+                <tr>
+                    <th>Match Score</th>
+                    <th>Name</th>
+                    <th>Contact info</th>
+                    <th>Links</th>
+                    <th>Education</th>
+                    <th>Skills</th>
+                </tr>
+                <!-- Example rows (you can add more rows dynamically with JavaScript) -->
+                <tr>
+                    <td>95%</td>
+                    <td>John Doe</td>
+                    <td>john.doe@example.com</td>
+                    <td>
+                        <a href="https://www.linkedin.com/in/johndoe" target="_blank">LinkedIn</a><br>
+                        <a href="https://github.com/johndoe" target="_blank">GitHub</a>
+                    </td>
+                    <td>Bachelor of Science, Computer Science</td>
+                    <td>JavaScript, Python, HTML/CSS</td>
+                </tr>
+                <tr>
+                    <td>80%</td>
+                    <td>Jane Smith</td>
+                    <td>jane.smith@example.com</td>
+                    <td>
+                        <a href="https://www.linkedin.com/in/janesmith" target="_blank">LinkedIn</a><br>
+                        <a href="https://github.com/janesmith" target="_blank">GitHub</a>
+                    </td>
+                    <td>Master of Business Administration</td>
+                    <td>Project Management, Leadership</td>
+                </tr>
+                <!-- Add more rows for other matched or non-matched candidates as needed -->
+            </table>
+        </div>
+    </div>
+    <script>
+    function uploadForm() {
+      const form = document.querySelector('form');
+      const formData = new FormData(form);
+      fetch('/upload', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        // Update the result table with the data received from the server
+        const resultTable = document.getElementById('resultTable');
+        // Clear existing rows
+        resultTable.innerHTML = `
+          <tr>
+            <th>Match Score</th>
+            <th>Name</th>
+            <th>Contact info</th>
+            <th>Links</th>
+            <th>Education</th>
+            <th>Skills</th>
+          </tr>
+        `;
+        // Add new rows based on the data received
+        data.data.forEach(candidate => {
+          const newRow = `
+            <tr>
+              <td>${candidate.match_score}%</td>
+              <td>${candidate.name}</td>
+              <td>${candidate.emails.join('<br>')}</td>
+              <td>${candidate.links.map(link => `<a href="${link}" target="_blank">${link}</a>`).join('<br>')}</td>
+              <td>${candidate.educations.join('<br>')}</td>
+              <td>${candidate.skills.map(skill => skill[1]).join(', ')}</td>
+            </tr>
+          `;
+          resultTable.innerHTML += newRow;
+        });
+      })
+      .catch(error => console.error('Error:', error));
+    }
+  </script>
+</body>
+</html>
