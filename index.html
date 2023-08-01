@@ -85,7 +85,7 @@
         <h1>Resume Parser</h1>
     </div>
     <div class="container">
-        <form action="/upload" method="post" enctype="multipart/form-data">
+        <form id="resumeForm" enctype="multipart/form-data">
             <div>
                 <label for="file">Upload Candidate Resume:</label>
                 <input type="file" id="file" name="file" required>
@@ -97,9 +97,11 @@
             </div>
             <br>
             <div style="text-align: center;">
-                <input type="submit" value="Upload" onclick="uploadForm()">
+                <input type="submit" value="Upload">
             </div>
         </form>
+
+        
         <div class="result" id="resultSection">
             <h3>Matching Results:</h3>
             <table id="resultTable">
@@ -139,45 +141,51 @@
         </div>
     </div>
     <script>
-    function uploadForm() {
-      const form = document.querySelector('form');
-      const formData = new FormData(form);
-      fetch('/upload', {
-        method: 'POST',
-        body: formData
-      })
-      .then(response => response.json())
-      .then(data => {
-        // Update the result table with the data received from the server
-        const resultTable = document.getElementById('resultTable');
-        // Clear existing rows
-        resultTable.innerHTML = `
-          <tr>
-            <th>Match Score</th>
-            <th>Name</th>
-            <th>Contact info</th>
-            <th>Links</th>
-            <th>Education</th>
-            <th>Skills</th>
-          </tr>
-        `;
-        // Add new rows based on the data received
-        data.data.forEach(candidate => {
-          const newRow = `
-            <tr>
-              <td>${candidate.match_score}%</td>
-              <td>${candidate.name}</td>
-              <td>${candidate.emails.join('<br>')}</td>
-              <td>${candidate.links.map(link => `<a href="${link}" target="_blank">${link}</a>`).join('<br>')}</td>
-              <td>${candidate.educations.join('<br>')}</td>
-              <td>${candidate.skills.map(skill => skill[1]).join(', ')}</td>
-            </tr>
-          `;
-          resultTable.innerHTML += newRow;
+        // Attach event listener to form submit event
+        document.getElementById('resumeForm').addEventListener('submit', function (event) {
+            event.preventDefault(); // Prevent the form from submitting normally
+
+            // Get form data and build FormData object
+            const formData = new FormData(this);
+
+            // Fetch data using AJAX
+            fetch('/', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    // Update the result table with the data received from the server
+                    const resultTable = document.getElementById('resultTable');
+                    // Clear existing rows
+                    resultTable.innerHTML = `
+                        <tr>
+                            <th>Match Score</th>
+                            <th>Name</th>
+                            <th>Contact info</th>
+                            <th>Links</th>
+                            <th>Education</th>
+                            <th>Skills</th>
+                        </tr>
+                    `;
+                    // Add new rows based on the data received
+                    data.data.forEach(candidate => {
+                        const newRow = `
+                            <tr>
+                                <td>${candidate.match_score * 100}%</td>
+                                <td>${candidate.name.join(', ')}</td>
+                                <td>${candidate.emails.join('<br>')}</td>
+                                <td>${candidate.links.map(link => `<a href="${link}" target="_blank">${link}</a>`).join('<br>')}</td>
+                                <td>${candidate.educations.join('<br>')}</td>
+                                <td>${candidate.skills.map(skill => skill[1]).join(', ')}</td>
+                            </tr>
+                        `;
+                        resultTable.innerHTML += newRow;
+                    });
+                })
+                .catch(error => console.error('Error:', error));
         });
-      })
-      .catch(error => console.error('Error:', error));
-    }
-  </script>
+    </script>
+
 </body>
 </html>

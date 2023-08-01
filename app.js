@@ -16,7 +16,7 @@ app.get('/', (req, res) => {
 });
 
 
-app.post('/upload', upload.single('file'), (req, res) => {
+app.post('/', upload.single('file'), (req, res) => {
   const zipFilePath = req.file.path; // Path of the uploaded file
   const jobDescription = req.body.description; // Job description from the textarea
 
