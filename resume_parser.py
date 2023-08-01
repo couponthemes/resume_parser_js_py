@@ -1,6 +1,7 @@
 # resume_parser.py
 
 import os
+import sys
 import io
 import re
 import json
@@ -41,7 +42,20 @@ for word in allow_stop_words:
 for word in allow_punct:
     nlp.vocab[word].is_punct = False
 
+# skill_extractor = SkillExtractor(nlp, SKILL_DB, PhraseMatcher)
+if os.name == 'nt':  # Windows
+    sys.stdout = open(os.devnull, "w")
+    sys.stderr = open(os.devnull, "w")
+else:  # Unix-like systems
+    sys.stdout = open('/dev/null', 'w')
+    sys.stderr = open('/dev/null', 'w')
+
 skill_extractor = SkillExtractor(nlp, SKILL_DB, PhraseMatcher)
+
+# Reset standard output and error to their default values
+sys.stdout = sys.__stdout__
+sys.stderr = sys.__stderr__
+
 ngramed_score_threshold = 0.7
 
 # Reg
@@ -246,7 +260,7 @@ def main(zip_file_path, job_desc):
         # Check if the current item is a file
         if os.path.isfile(file_path):
             # Perform operations on the file
-            print("Processing file:", file_path)
+            # print("Processing file:", file_path)
             # Extract data from resume
             out = json.loads(resume_parser(file_path))
             skills_target = [(sublist[1], sublist[2]) for sublist in out["data"]["skills"]]
