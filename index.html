@@ -32,6 +32,7 @@
                 <tr>
                     <th>Match Score</th>
                     <th>Name</th>
+                    <th>Phone Number</th>
                     <th>Contact info</th>
                     <th>Links</th>
                     <th>Education</th>
@@ -39,6 +40,7 @@
                 </tr>
                 <!-- Example rows (you can add more rows dynamically with JavaScript) -->
                 <tr class="lodingtr">
+                    <td>&nbsp;</td>
                     <td>&nbsp;</td>
                     <td>&nbsp;</td>
                     <td>&nbsp;</td>
@@ -72,6 +74,7 @@
                         <tr>
                             <th>Match Score</th>
                             <th>Name</th>
+                            <th>Phone Number</th>
                             <th>Contact info</th>
                             <th>Links</th>
                             <th>Education</th>
@@ -82,14 +85,15 @@
                     data.data.forEach(candidate => {
                         const newRow = `
                             <tr>
-                              <td valign="top">${candidate.match_score * 100}%</td>
+                              <td valign="top">${(candidate.match_score * 100).toFixed(2)}%</td>
                               <td valign="top">${candidate.name.join(', ')}</td>
+                              <td valign="top">${candidate.phones.join('<br>')}</td>
                               <td valign="top">${candidate.emails.join('<br>')}</td>
                               <td valign="top">${candidate.links.map(link => `<a href="${link}" target="_blank">${link}</a>`).join('<br>')}</td>
                               <td valign="top">${candidate.educations.join('<br>')}</td>
                               <td valign="top">
                                 ${candidate.skills
-                                  .map(skill => `${skill[0]} ${skill[1]}`)
+                                  .map(skill => `${skill[0]} (${skill[1].toFixed(2)})`)
                                   .join(',<br>')}
                               </td>
                             </tr>

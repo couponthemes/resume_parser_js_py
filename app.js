@@ -4,6 +4,7 @@ const express = require('express');
 const multer = require('multer');
 const { PythonShell } = require('python-shell');
 const path = require('path');
+const fs = require('fs'); // Import the fs module
 
 const app = express();
 const upload = multer({ dest: 'uploads/' }); // Directory to store uploaded files
@@ -14,7 +15,7 @@ app.use(express.static('public')); // Serve static files from the 'public' direc
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
-
+ 
 
 app.post('/', upload.single('file'), (req, res) => {
   const zipFilePath = req.file.path; // Path of the uploaded file
@@ -25,7 +26,6 @@ app.post('/', upload.single('file'), (req, res) => {
     args: [zipFilePath, jobDescription],
   };
 
-
   // Use PythonShell.run with Promise
   PythonShell.run('resume_parser.py', options)
     .then(results => {
@@ -33,6 +33,24 @@ app.post('/', upload.single('file'), (req, res) => {
       console.log("Data is: "+results);
       const parsedResults = JSON.parse(results);
       res.json(parsedResults);
+
+      // Delete files in the "resumes" folder
+      fs.readdir('resumes', (err, files) => {
+        if (err) {
+          console.error('Error reading "resumes" folder:', err);
+        } else {
+          files.forEach(file => {
+            const filePath = path.join('resumes', file);
+            fs.unlink(filePath, err => {
+              if (err) {
+                console.error('Error deleting file:', filePath, err);
+              } else {
+                console.log('File deleted:', filePath);
+              }
+            });
+          });
+        }
+      });
     })
     .catch(err => {
       console.error('Error executing Python script:', err);
